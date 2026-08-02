@@ -5,7 +5,10 @@
 // docs/09-database-and-migrations.md.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Explicit target for the node:20-alpine (musl + OpenSSL 3.x) Docker image
+  // used in Dockerfile — see the OpenSSL comment there for why this matters.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
