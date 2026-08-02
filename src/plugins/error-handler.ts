@@ -1,9 +1,9 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyError, FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 import { logger } from '../lib/logger.js';
 
 export function registerErrorHandler(app: FastifyInstance) {
-  app.setErrorHandler((error, request, reply) => {
+  app.setErrorHandler((error: FastifyError | ZodError, request, reply) => {
     if (error instanceof ZodError) {
       return reply.status(400).send({
         success: false,

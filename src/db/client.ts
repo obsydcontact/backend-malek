@@ -5,7 +5,6 @@ import { env } from '../config/env.js';
 // In dev with `tsx watch`, guard against creating multiple instances on
 // hot reload by stashing the client on the global object.
 declare global {
-  // eslint-disable-next-line no-var
   var __prisma: PrismaClient | undefined;
 }
 

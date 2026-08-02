@@ -6,7 +6,7 @@ export async function healthRoutes(app: FastifyInstance) {
     try {
       await prisma.$queryRaw`SELECT 1`;
       return reply.status(200).send({ status: 'ok', database: 'connected' });
-    } catch (error) {
+    } catch {
       return reply.status(503).send({ status: 'degraded', database: 'unreachable' });
     }
   });
