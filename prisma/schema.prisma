@@ -1,0 +1,129 @@
+// COACH MALEK — backend database schema
+// Run `npx prisma migrate dev --name <description>` locally to create
+// a new migration after editing this file. Migrations are applied
+// automatically on container start in production — see
+// docs/09-database-and-migrations.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  BOOKED
+  CONVERTED
+  LOST
+}
+
+enum LeadSource {
+  CONTACT_FORM
+  NEWSLETTER
+  WHATSAPP_CLICK
+  BOOKING_WIDGET
+}
+
+enum LeadGoal {
+  WEIGHT_LOSS
+  MUSCLE_BUILDING
+  BODY_RECOMPOSITION
+  ONLINE_COACHING
+  PERSONAL_TRAINING
+  NUTRITION_COACHING
+  OTHER
+}
+
+model Lead {
+  id        String     @id @default(cuid())
+  eventId   String     @unique // shared with browser pixel event for CAPI dedup
+  firstName String
+  lastName  String
+  email     String
+  phone     String?
+  goal      LeadGoal   @default(OTHER)
+  message   String?
+  source    LeadSource @default(CONTACT_FORM)
+  status    LeadStatus @default(NEW)
+  locale    String     @default("fr")
+
+  pageUrl    String?
+  utmSource  String?
+  utmMedium  String?
+  utmCampaign String?
+
+  // Raw (unhashed) click identifiers — not PII, safe to store for
+  // debugging/attribution. PII is only ever hashed at the moment it
+  // is sent to a CAPI endpoint, never stored hashed in the DB.
+  fbp    String?
+  fbc    String?
+  ttclid String?
+  scclid String?
+
+  sheetSyncedAt DateTime?
+  capiMeta      Json? // last CAPI response/attempt per platform, for debugging
+  capiTikTok    Json?
+  capiSnapchat  Json?
+
+  createdAt DateTime @updatedAt @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  locale    String   @default("fr")
+  createdAt DateTime @default(now())
+}
+
+// Reserved for the future Stripe integration (docs/12-roadmap-future-features.md).
+// Included now so the migration history has a stable foundation and the
+// Google Sheets "Orders" tab has a matching source table from day one.
+enum OrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  eventId       String      @unique
+  leadId        String?
+  firstName     String
+  lastName      String
+  email         String
+  phone         String?
+  plan          String
+  amount        Decimal     @db.Decimal(10, 2)
+  currency      String      @default("CHF")
+  status        OrderStatus @default(PENDING)
+  paymentMethod String?
+
+  stripePaymentIntentId String? @unique
+
+  pageUrl     String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  fbp         String?
+  fbc         String?
+  ttclid      String?
+  scclid      String?
+
+  sheetSyncedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([status])
+}
